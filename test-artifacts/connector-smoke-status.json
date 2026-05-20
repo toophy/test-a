@@ -1,0 +1,14 @@
+{
+  "repo": "toophy/test-a",
+  "branch": "chatgpt/connector-smoke-test",
+  "purpose": "GitHub connector smoke test",
+  "operations": [
+    "read_repo",
+    "fetch_commit",
+    "create_branch",
+    "fetch_file",
+    "update_file",
+    "create_file"
+  ],
+  "status": "created-by-chatgpt-connector"
+}
