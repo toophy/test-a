@@ -1,0 +1,53 @@
+name: Git LFS Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/lfs-smoke-20260521
+    paths:
+      - .gitattributes
+      - scripts/lfs-smoke-test.sh
+      - .github/workflows/lfs-smoke-test.yml
+      - test-lfs/**
+  pull_request:
+    paths:
+      - .gitattributes
+      - scripts/lfs-smoke-test.sh
+      - .github/workflows/lfs-smoke-test.yml
+      - test-lfs/**
+
+permissions:
+  contents: write
+
+jobs:
+  lfs-smoke-test:
+    name: Verify Git LFS tracking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: false
+          persist-credentials: true
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-lfs
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run LFS smoke test
+        run: bash scripts/lfs-smoke-test.sh
+
+      - name: Push generated LFS smoke assets
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          if git rev-parse --verify HEAD >/dev/null 2>&1; then
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
