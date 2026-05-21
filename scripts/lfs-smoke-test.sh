@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Git LFS smoke test for this repository.
-# This script is intended to run inside GitHub Actions, where git-lfs is available.
+# Intended to run in GitHub Actions, where git-lfs and authenticated remotes are available.
 
 echo "== Git version =="
 git --version
@@ -17,6 +17,8 @@ git lfs track "test-lfs/*.zip"
 
 mkdir -p test-lfs
 
+# On the first branch run, these files do not exist yet, so generate real payloads.
+# On PR runs, they usually already exist as LFS pointer checkout files, so do not overwrite them.
 if [[ ! -f test-lfs/lfs-smoke.bin ]]; then
   python3 - <<'PY'
 from pathlib import Path
@@ -59,6 +61,11 @@ git cat-file -p HEAD:test-lfs/lfs-smoke.bin | grep -q "version https://git-lfs.g
 git cat-file -p HEAD:test-lfs/lfs-smoke.zip | grep -q "version https://git-lfs.github.com/spec/v1"
 
 echo "== Local LFS fsck =="
-git lfs fsck
+if ! git lfs fsck; then
+  echo "Local LFS objects are missing; downloading from the GitHub LFS store and retrying."
+  git lfs pull --include="test-lfs/*" --exclude=""
+  git lfs checkout
+  git lfs fsck
+fi
 
 echo "Git LFS smoke test passed locally."
